@@ -57,6 +57,10 @@ export const GameView: React.FC<GameViewProps> = ({ session, onEnd, onExit }) =>
   const [fullscreenImage, setFullscreenImage] = useState<boolean>(false);
   const [titleComplete, setTitleComplete] = useState(false);
 
+  const handleTypewriterComplete = useCallback(() => {
+    setTitleComplete(true);
+  }, []);
+
   const insight = session.insights[currentIndex];
   const currentInsightResponses = useMemo(() => responses[insight?.insight_id] || {}, [responses, insight]);
 
@@ -166,6 +170,7 @@ export const GameView: React.FC<GameViewProps> = ({ session, onEnd, onExit }) =>
 
   const nextInsight = () => {
     if (currentIndex < session.insights.length - 1) {
+      setTitleComplete(false);
       setCurrentIndex(currentIndex + 1);
       setSelectedParticipantId(null);
       setEvaluationState({ show: false });
@@ -176,6 +181,7 @@ export const GameView: React.FC<GameViewProps> = ({ session, onEnd, onExit }) =>
 
   const prevInsight = () => {
     if (currentIndex > 0) {
+      setTitleComplete(false);
       setCurrentIndex(currentIndex - 1);
       setSelectedParticipantId(null);
       setEvaluationState({ show: false });
@@ -256,38 +262,42 @@ export const GameView: React.FC<GameViewProps> = ({ session, onEnd, onExit }) =>
               <TypewriterText 
                 key={insight.insight_id}
                 text={insight.title} 
-                onComplete={() => setTitleComplete(true)} 
+                onComplete={handleTypewriterComplete} 
               />
             </h2>
             
-            <AnimatePresence mode="wait">
-              {titleComplete && (
-                <motion.p 
-                  key={insight.insight_id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
-                  className={`${hasValidImage ? 'text-2xl' : 'text-3xl'} text-slate-500 font-medium leading-relaxed max-w-5xl`}
-                >
-                  {insight.description}
-                </motion.p>
-              )}
-              {!titleComplete && (
-                <p className={`${hasValidImage ? 'text-2xl' : 'text-3xl'} text-slate-500 font-medium leading-relaxed max-w-5xl invisible`}>
-                  {insight.description}
-                </p>
-              )}
-            </AnimatePresence>
+            <motion.p 
+              key={insight.insight_id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ 
+                opacity: titleComplete ? 1 : 0, 
+                y: titleComplete ? 0 : 10 
+              }}
+              transition={{ 
+                duration: 0.8, 
+                ease: "easeOut", 
+                delay: titleComplete ? 0.2 : 0 
+              }}
+              className={`${hasValidImage ? 'text-2xl' : 'text-3xl'} text-slate-500 font-medium leading-relaxed max-w-5xl ${!titleComplete ? 'pointer-events-none' : ''}`}
+            >
+              {insight.description}
+            </motion.p>
           </div>
 
           {hasValidImage && (
-            <div 
-              onClick={() => setFullscreenImage(true)}
-              className="relative group rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-50 aspect-video flex items-center justify-center cursor-zoom-in"
-            >
-              <img src={insight.image} alt={insight.title} className="object-cover w-full h-full opacity-95 group-hover:scale-105 transition-all duration-500" />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center">
-                  <Maximize2 className="text-white w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center justify-center w-full">
+              <div 
+                onClick={() => setFullscreenImage(true)}
+                className="relative group rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white bg-white cursor-zoom-in transition-all duration-500"
+              >
+                <img 
+                  src={insight.image} 
+                  alt={insight.title} 
+                  className="block w-full h-auto max-h-[550px] object-contain opacity-95" 
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center transition-colors">
+                    <Maximize2 className="text-white w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </div>
             </div>
           )}
